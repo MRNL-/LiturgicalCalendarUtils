@@ -2,6 +2,7 @@
 DateTime python extensions to help create and consults a liturgical calendar
 (C) Martin Raynal, 2015
 
+<pre>
 == This is currently a work heavily in progress. ==
 CatholicDateUtils.py :
 	* This library contains methods returning the date of various solemnities and feasts for a given year.
@@ -25,3 +26,4 @@ http://www.romcal.net/
 It also make heavy use of the DateUtil python library, especially (obviously?) the easter() function.
 https://labix.org/python-dateutil
 
+</pre>
