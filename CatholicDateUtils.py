@@ -24,19 +24,21 @@
 #----------------------------------------------------------------------------------#
 
 import calendar
+import csv
 
 from dateutil import rrule
 from dateutil.easter import *
 from datetime import date
+from datetime import datetime
 from datetime import timedelta
 
 from LiturgicalUtils import *
 
 seatab=["Ordinary Time",
-            "Advent",
-            "Christmas",
-            "Lent",
-            "Easter"]
+        "Advent",
+        "Christmas",
+        "Lent",
+        "Easter"]
 daytab=["",
         "Monday",
         "Tuesday",
@@ -503,15 +505,28 @@ def genCelebration(season, week, dow):
 
     #special case for sunday
     if (dow == 7):
-           retval += numstring + " Sunday of " + seatab[season.value]
+           retval +=numstring + " Sunday of " + seatab[season.value]
     else:
-           retval += daytab[dow] + " of the " + numstring + " Week of " + seatab[season.value]
+        weekly=" of the " + numstring + " Week of " + seatab[season.value]
+        #TODO: option to toggle ember days
+        #TODO: english proper names
+        #if(season==Seasons.LENT and week==1):
+        #    weekly=" of the Spring Embers Days"
+        #if(season==Seasons.ADVENT and week==3):
+        #    weekly=" of the Advent Embers Days"
+        #TODO: week after pentecost & week after Triumph of the Cross
+        #if(season==S easons.ORDINARY and week==6):
+        #    weekly=" of the Summer Embers Days"        
+        #if(season==Seasons.ORDINARY and week==30):
+        #    weekly=" of the Fall Embers Days"
+
+        retval += daytab[dow] + weekly
 
     return retval
 
 
 
-def computeCalendar(year):
+def computeCalendar(year, verbose=True):
     "Compute the whole calendar for given year"
     numdays=365
     if(calendar.isleap(year)):
@@ -528,40 +543,69 @@ def computeCalendar(year):
         cal.append(LiturgicalDay(d, Colors.GREEN, rk, Seasons.ORDINARY, None))
 
     #= Christmas Time == from the start of the year ================
-    # -- Days before Epiphany
-    for day in cal[0:5]:        
-        day.season = Seasons.CHRISTMAS
-        day.color = Colors.WHITE
-        dow = day.date.isoweekday()  
-        #Second Sunday of Christmas
-        if(dow==7):
-            day.descr=genCelebration(Seasons.CHRISTMAS, 2, dow)
-        else:
-            day.descr=epbefore[dow]
+    bld=10
+    #TODO: option for Epiphany on Jan.6
+    if False:
+        # -- Days before Epiphany
+        for day in cal[0:5]:        
+            day.season = Seasons.CHRISTMAS
+            day.color = Colors.WHITE
+            dow = day.date.isoweekday()  
+            #Second Sunday of Christmas
+            if(dow==7):
+                day.descr=genCelebration(Seasons.CHRISTMAS, 2, dow)
+            else:
+                day.descr=epbefore[dow]
 
-    # -- Epiphany
-    epi=cal[5]
-    epi.descr=ep
-    epi.season = Seasons.CHRISTMAS
-    epi.color = Colors.WHITE
-    epi.rank=Ranks.SOLEMNITY
+        # -- Epiphany
+        epi=cal[5]
+        epi.descr=ep
+        epi.season = Seasons.CHRISTMAS
+        epi.color = Colors.WHITE
+        epi.rank=Ranks.SOLEMNITY
 
-    # ---- get sunday after epiphany (day of Baptism of the Lord)
-    bld= 12-epi.date.isoweekday()
-    
-    # -- Days after Epiphany
-    for day in cal[6:bld]:
-        dow = day.date.isoweekday()
-        day.season = Seasons.CHRISTMAS
-        day.color = Colors.WHITE
-        day.descr=epoctave[dow]
-    
-    # -- Baptism of the Lord 
-    bL=cal[bld]
-    bL.descr=bl
-    bL.season = Seasons.CHRISTMAS
-    bL.color = Colors.WHITE
-    bL.rank=Ranks.LORD
+        # ---- get sunday after epiphany (day of Baptism of the Lord)
+        bld= 12-epi.date.isoweekday()
+        
+        # -- Days after Epiphany
+        for day in cal[6:bld]:
+            dow = day.date.isoweekday()
+            day.season = Seasons.CHRISTMAS
+            day.color = Colors.WHITE
+            day.descr=epoctave[dow]
+        
+        # -- Baptism of the Lord 
+        bL=cal[bld]
+        bL.descr=bl
+        bL.season = Seasons.CHRISTMAS
+        bL.color = Colors.WHITE
+        bL.rank=Ranks.LORD
+    else:
+        #The Baptism of the Lord is moved to the Monday after Epiphany if the year starts on monday or sunday.
+        #Otherwise, it is the Sunday following Epiphany.
+        jan1 = Sol_MaryMotherOfGod(year).isoweekday()
+        epd = 7 - jan1
+        bld = epd + 7
+        if jan1==7 or jan1 == 1: #sunday or monday
+            bld=epd+1
+
+        for i,day in enumerate(cal[:bld+1]):
+            dow = day.date.isoweekday()
+            day.season = Seasons.CHRISTMAS
+            day.color = Colors.WHITE
+            if i < epd:
+                day.descr=epbefore[dow]
+            elif i == epd:
+                day.descr=ep
+                day.rank=Ranks.SOLEMNITY
+            elif i == bld:
+                day.descr=bl
+                day.rank=Ranks.LORD
+            elif i > epd:
+                day.descr=epoctave[dow]
+            
+    #- endif --- Epiphany season -----------------------------------  
+        
 
     #= Lent ========================================================
     # ---- get Easter day of year
@@ -574,7 +618,7 @@ def computeCalendar(year):
 
         if(day.date.isoweekday()==3):
             day.rank = Ranks.ASHWED
-            day.season = Seasons.LENT
+            day.season = Seasons.PASCHAL
         else:
             day.rank = Ranks.WEEKDAY
             day.season = Seasons.LENT
@@ -778,10 +822,6 @@ def computeCalendar(year):
         hfd.season = Seasons.CHRISTMAS
         hfd.color = Colors.WHITE
 
-    #TODO !!! Fixed celebrations & stuff
-    #proper()
-
-
     #= Ordinary Time ===============================================
     # -- First part
     week=1
@@ -808,18 +848,117 @@ def computeCalendar(year):
             day.descr=genCelebration(Seasons.ORDINARY, week, dow)
             day.season = Seasons.ORDINARY
             day.color = Colors.GREEN
+
+
+     #= Fixed celebrations ==========================================
+    #TODO generate fixed calendar depending on requested country and diocese/order
+    fixedCal=generateGeneralFixedCalendar(year)
+    for fday in fixedCal:
+        fdoy=fday.date.timetuple().tm_yday - 1
+        day=cal[fdoy]
+        
+#     It is possible for two Solemnities to occur during the PASCHAL
+#*    season (Holy Week and the Octave of Easter): St. Joseph (March
+#*    19) and the Annunciation (March 25). St. Joseph is moved backward
+#*    to the Saturday before Palm Sunday. Annunciation is moved forward
+#*    to the Monday after the Second Sunday of Easter, unless it falls
+#*    on Palm Sunday. In that case it is moved to the preceeding
+#*    Saturday (i.e., Saturday of the Fifth Week of Lent).
+        while ((day.season == Seasons.PASCHAL or day.season==Seasons.PASSION) and fday.rank == Ranks.SOLEMNITY):
+            if ((cal[fdoy-1].season != Seasons.PASCHAL and cal[fdoy-1].season!=Seasons.PASSION) or fday.date.day == 19):
+                fdoy-=1
+                if(verbose):
+                    print "S: movBack"
+            else:
+                fdoy+=1                
+                if(verbose):
+                    print "S: movFwd"
+        #- end -----------------------------
+                
+#       When a Feast of the Lord, or a Solemnity occurs on a Sunday in
+#       Lent, Advent, or Easter, transfer it to the following day.
+#       Otherwise, overwrite the Sunday.
+
+        if (fday.rank.value > cal[fdoy].rank.value):
+            if (cal[fdoy].rank == Ranks.SUNDAY and
+	     (cal[fdoy].season == Seasons.LENT or 
+	      cal[fdoy].season == Seasons.ADVENT or
+	      cal[fdoy].season == Seasons.EASTER)):
+                fdoy+=1
+                print " >> dont overwrite non-ordinary sunday"
+                
+            day=cal[fdoy]
+            if(verbose):
+                print day.date.date(),day.rank, day.descr, "is overwritten by", fday.descr, fday.rank
+            day.descr=fday.descr
+            day.saintrank=day.saintrank
+#           If the rank of the fixed celebration is less than a Feast
+#           (i.e., an Optional Memorial or a Memorial), and the season is
+#           Lent, then the rank of the fixed celebration is reduced to a
+#           Commemoration, and the color remains the color of the season.
+#           In all other cases, the rank of the fixed celebration replaces
+#           the rank of the seasonal celebration, and, if the fixed
+#           celebration has a proper color, the color of the fixed
+#           celebration replaces the color of the seasonal celebration.
+            rk=fday.rank
+            if(rk.value < Ranks.FEAST.value and fday.season==Seasons.LENT):
+                rk=Ranks.COMMEMORATION
+            elif fday.color!=Colors.NONE:
+                day.color=fday.color
+            day.rank=rk
+            
+        else:
+            cal[fdoy].ommitted=fday
+        
+    #endfor --------------------------------------------------------
                 
     return cal
 
 
+## PROPER CALENDARS ####################################################
+def generateGeneralFixedCalendar(year):
+    fixed=[]
+    with open('general.csv', 'rb') as csvfile:
+        calreader = csv.reader(csvfile,delimiter=';')
+        for row in calreader:
+            d=datetime(year, int(float(row[0])),int(float(row[1])))
+            rk=parseRank(row[2])
+            color=parseColor(row[3])
+            #TODO multiple optional memories
+            celebration=row[4]
+            saint=None
+            if(row[5]!=None and row[5]!=''):
+                saint=row[5]
+            fixed.append(LiturgicalDay(d, color, rk, None, celebration))
+                         
+    return fixed
 
-
-
+def generateProperFixedCalendar(year,country,diocese=None,order=None):
+    fixed=[]
+    #TODO diocese & order: overwrite all higher levels
+    #TODO fail gracefully
+    with open('National/'+country+'/proper.csv', 'rb') as csvfile:
+        calreader = csv.reader(csvfile,delimiter=';')
+        for row in calreader:
+            d=datetime(year, int(float(row[0])),int(float(row[1])))
+            rk=parseRank(row[2])
+            color=parseColor(row[3])
+                #TODO multiple saints
+            celebration=row[4]
+            saint=None
+            if(row[5]!=None and row[5]!=''):
+                saint=row[5]
+            fixed.append(LiturgicalDay(d, color, rk, None, celebration))
+                         
+    return fixed
 
 #load properties
 #myprops = dict(line.strip().split('=') 
 #               for line in open('/Path/filename.properties'))
 #               if ("=" in line and 
 #                   not line.startswith("#")))
- #     print day.date.date(), day.color, day.rank, day.descr, day.season   
-       
+
+#from CatholicDateUtils import *
+#cl=computeCalendar(
+#f1=open('./generated_2015.csv','w+')
+ #     print >>f1, day.date.date(),";", day.color,";", day.rank,";", day.descr,";", day.season  

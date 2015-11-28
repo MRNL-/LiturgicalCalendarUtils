@@ -57,15 +57,80 @@ class Seasons(Enum):
     PASCHAL = 5
     PASSION = 6
 
+def parseColor(colLetter):
+    if colLetter=='-':
+        return Colors.NONE
+    if colLetter=='g':
+        return Colors.GREEN
+    if colLetter=='W':
+        return Colors.WHITE
+    if colLetter=='R':
+        return Colors.RED
+    if colLetter=='P':
+        return Colors.PURPLE
+    if colLetter=='r':
+        return Colors.ROSE
+    if colLetter=='B':
+        return Colors.BLACK
+    if colLetter=='G':
+        return Colors.GOLD
+    if colLetter=='b':
+        return Colors.BLUE
+
+def parseRank(rankLetter):
+    if rankLetter=='S':
+        return Ranks.SOLEMNITY    
+    if rankLetter=='L':
+        return Ranks.LORD
+    if rankLetter=='F':
+        return Ranks.FEAST
+    if rankLetter=='M':
+        return Ranks.MEMORIAL
+    if rankLetter=='O':
+        return Ranks.OPTIONAL
+    #should never be needed, but heh.
+    if rankLetter=='w':
+        return Ranks.WEEKDAY
+    if rankLetter=='c':
+        return Ranks.COMMEMORATION
+    if rankLetter=='S':
+        return Ranks.SUNDAY
+    if rankLetter=='a':
+        return Ranks.ASHWED
+    if rankLetter=='H':
+        return Ranks.HOLYWEEK
+    if rankLetter=='T':
+        return Ranks.TRIDUUM
+
+
 class LiturgicalDay:
     """This class holds all informations regarding a specific calendar day."""
 
-    def __init__(self, daydate, color, rank, season, descr):
+    def __init__(self, daydate, color, rank, season, descr, strank=None):
         self.date=daydate
         self.color=color
+        #TODO:
+        #self.optColor=None
         self.rank=rank
         self.season=season
         self.descr=descr
+        self.saintrank=strank
+        #ommited celebrations for the day
+        self.ommitted=None
+
+    def printAll(self):
+        """Prints a csv-formatted string containing all informations pertaining to the day"""
+        retStr=""
+        #TODO multiple optionals
+        retStr+=str(self.date.date())+";"+str(self.season)+";"+str(self.color)+";"+str(self.rank)+";"+self.descr
+        if self.saintrank:
+            retStr+=";"+self.saintrank
+        else:
+            retStr+=";"
+        if(self.ommitted != None):
+            retStr+=";"+"[ Omitted: " + self.ommitted.descr +" ("+str(self.ommitted.rank)+") ]"
+        return retStr;
+        
 
         
         
