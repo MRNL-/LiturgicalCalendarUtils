@@ -117,6 +117,8 @@ class LiturgicalDay:
         self.saintrank=strank
         #ommited celebrations for the day
         self.ommitted=None
+        #the day this celebration was supposed to take place
+        self.originalDate=None
 
     def printAll(self):
         """Prints a csv-formatted string containing all informations pertaining to the day"""
@@ -129,6 +131,8 @@ class LiturgicalDay:
             retStr+=";"
         if(self.ommitted != None):
             retStr+=";"+"[ Omitted: " + self.ommitted.descr +" ("+str(self.ommitted.rank)+") ]"
+        if self.originalDate:
+            retStr+=";"+"( Moved from "+str(self.originalDate.date())+")"
         return retStr;
         
 

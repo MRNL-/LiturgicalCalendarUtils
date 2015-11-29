@@ -126,7 +126,7 @@ cmoctave = ["Second day in the Octave of Christmas",
 
 def IsEasterTide(date):
     "Returns TRUE if provided date is during Pascal Time."
-    return (date >= easter(date.year) and date <= Trinity(date.year))
+    return (date >= easter(date.year) and date <= Pentecost(date.year))
 
 def IsHolyWeek(date):
     ""
@@ -475,9 +475,6 @@ def BaptismOfTheLord(year):
 def StMartin(year):
     "St Martin de Tours"
     return date(year, 11, 11)
-
-
-
 
 
 #==========================================
@@ -856,6 +853,9 @@ def computeCalendar(year, verbose=True):
     for fday in fixedCal:
         fdoy=fday.date.timetuple().tm_yday - 1
         day=cal[fdoy]
+
+        # Keep track of if we have moved a celebration
+        moved=False
         
 #     It is possible for two Solemnities to occur during the PASCHAL
 #*    season (Holy Week and the Octave of Easter): St. Joseph (March
@@ -864,15 +864,15 @@ def computeCalendar(year, verbose=True):
 #*    to the Monday after the Second Sunday of Easter, unless it falls
 #*    on Palm Sunday. In that case it is moved to the preceeding
 #*    Saturday (i.e., Saturday of the Fifth Week of Lent).
-        while ((day.season == Seasons.PASCHAL or day.season==Seasons.PASSION) and fday.rank == Ranks.SOLEMNITY):
+        while ((cal[fdoy].season == Seasons.PASCHAL or cal[fdoy].season==Seasons.PASSION) and fday.rank == Ranks.SOLEMNITY):
             if ((cal[fdoy-1].season != Seasons.PASCHAL and cal[fdoy-1].season!=Seasons.PASSION) or fday.date.day == 19):
                 fdoy-=1
-                if(verbose):
-                    print "S: movBack"
+                if not moved:
+                    moved=True
             else:
-                fdoy+=1                
-                if(verbose):
-                    print "S: movFwd"
+                fdoy+=1
+                if not moved:
+                    moved=True
         #- end -----------------------------
                 
 #       When a Feast of the Lord, or a Solemnity occurs on a Sunday in
@@ -885,6 +885,8 @@ def computeCalendar(year, verbose=True):
 	      cal[fdoy].season == Seasons.ADVENT or
 	      cal[fdoy].season == Seasons.EASTER)):
                 fdoy+=1
+                if not moved:
+                    moved=True
                 print " >> dont overwrite non-ordinary sunday"
                 
             day=cal[fdoy]
@@ -892,6 +894,8 @@ def computeCalendar(year, verbose=True):
                 print day.date.date(),day.rank, day.descr, "is overwritten by", fday.descr, fday.rank
             day.descr=fday.descr
             day.saintrank=day.saintrank
+            if moved:
+                day.originalDate=fday.date
 #           If the rank of the fixed celebration is less than a Feast
 #           (i.e., an Optional Memorial or a Memorial), and the season is
 #           Lent, then the rank of the fixed celebration is reduced to a
@@ -901,7 +905,8 @@ def computeCalendar(year, verbose=True):
 #           celebration has a proper color, the color of the fixed
 #           celebration replaces the color of the seasonal celebration.
             rk=fday.rank
-            if(rk.value < Ranks.FEAST.value and fday.season==Seasons.LENT):
+            if(rk.value < Ranks.FEAST.value and day.season==Seasons.LENT):
+                print "reducing rank to commemoration"
                 rk=Ranks.COMMEMORATION
             elif fday.color!=Colors.NONE:
                 day.color=fday.color
@@ -933,14 +938,30 @@ def generateGeneralFixedCalendar(year):
                          
     return fixed
 
-def generateProperFixedCalendar(year,country,diocese=None,order=None):
+def generateProperFixedCalendar(year,continent,country=None,diocese=None,order=None):
     fixed=[]
+    if not continent:
+        return fixed
+    
+    #TODO depth reading of all proper.csv files in path
+    path='Continental/'+continent+"/";
+    # scan if country exists (if requested) ; if so, open it.
+
+    # idem for diocese/order
+    
     #TODO diocese & order: overwrite all higher levels
     #TODO fail gracefully
-    with open('National/'+country+'/proper.csv', 'rb') as csvfile:
+    with open('Continental/'+continent+"/"+country+'/proper.csv', 'rb') as csvfile:
         calreader = csv.reader(csvfile,delimiter=';')
         for row in calreader:
-            d=datetime(year, int(float(row[0])),int(float(row[1])))
+            dayN=int(float(row[1]))
+            # Negative values are meant to designate last sunday of the given month
+            # (yay mobile fixed feasts !)
+            if dayN==-1:
+                #TODO compute last sunday of the month
+                dayN=25
+                
+            d=datetime(year, int(float(row[0])),dayN)
             rk=parseRank(row[2])
             color=parseColor(row[3])
                 #TODO multiple saints
@@ -958,7 +979,11 @@ def generateProperFixedCalendar(year,country,diocese=None,order=None):
 #               if ("=" in line and 
 #                   not line.startswith("#")))
 
-#from CatholicDateUtils import *
-#cl=computeCalendar(
-#f1=open('./generated_2015.csv','w+')
+##from CatholicDateUtils import *
+##cl=computeCalendar(2016)
+##f1=open('./generated_2016.csv','w+')
+##for day in cl:
+##    print >>f1, day.printAll()
  #     print >>f1, day.date.date(),";", day.color,";", day.rank,";", day.descr,";", day.season  
+#for day in cl:
+#    print >>f1, day.printAll()
