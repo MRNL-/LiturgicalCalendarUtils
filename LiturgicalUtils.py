@@ -60,47 +60,51 @@ class Seasons(Enum):
 def parseColor(colLetter):
     if colLetter=='-':
         return Colors.NONE
-    if colLetter=='g':
+    elif colLetter=='g':
         return Colors.GREEN
-    if colLetter=='W':
+    elif colLetter=='W':
         return Colors.WHITE
-    if colLetter=='R':
+    elif colLetter=='R':
         return Colors.RED
-    if colLetter=='P':
+    elif colLetter=='P':
         return Colors.PURPLE
-    if colLetter=='r':
+    elif colLetter=='r':
         return Colors.ROSE
-    if colLetter=='B':
+    elif colLetter=='B':
         return Colors.BLACK
-    if colLetter=='G':
+    elif colLetter=='G':
         return Colors.GOLD
-    if colLetter=='b':
+    elif colLetter=='b':
         return Colors.BLUE
+    else:
+        return None
 
 def parseRank(rankLetter):
     if rankLetter=='S':
         return Ranks.SOLEMNITY    
-    if rankLetter=='L':
+    elif rankLetter=='L':
         return Ranks.LORD
-    if rankLetter=='F':
+    elif rankLetter=='F':
         return Ranks.FEAST
-    if rankLetter=='M':
+    elif rankLetter=='M':
         return Ranks.MEMORIAL
-    if rankLetter=='O':
+    elif rankLetter=='O':
         return Ranks.OPTIONAL
     #should never be needed, but heh.
-    if rankLetter=='w':
+    elif rankLetter=='w':
         return Ranks.WEEKDAY
-    if rankLetter=='c':
+    elif rankLetter=='c':
         return Ranks.COMMEMORATION
-    if rankLetter=='S':
+    elif rankLetter=='S':
         return Ranks.SUNDAY
-    if rankLetter=='a':
+    elif rankLetter=='a':
         return Ranks.ASHWED
-    if rankLetter=='H':
+    elif rankLetter=='H':
         return Ranks.HOLYWEEK
-    if rankLetter=='T':
+    elif rankLetter=='T':
         return Ranks.TRIDUUM
+    else:
+        return None
 
 
 class LiturgicalDay:
@@ -122,19 +126,93 @@ class LiturgicalDay:
 
     def printAll(self):
         """Prints a csv-formatted string containing all informations pertaining to the day"""
-        retStr=""
-        #TODO multiple optionals
-        retStr+=str(self.date.date())+";"+str(self.season)+";"+str(self.color)+";"+str(self.rank)+";"+self.descr
+        retStr=""        
+            
+        #Todo handle saintrank(s)?
+        
+        retStr+=str(self.date.date())+";"+str(self.season)+";"+str(self.color)+";"+self.printRank()+";"+self.celebration()
         if self.saintrank:
-            retStr+=";"+self.saintrank
+            retStr+=";"+self.printSaint()
         else:
             retStr+=";"
         if(self.ommitted != None):
-            retStr+=";"+"[ Omitted: " + self.ommitted.descr +" ("+str(self.ommitted.rank)+") ]"
+            retStr+=";"+"[ Omitted: " + self.ommitted.celebration() +" ("+self.ommitted.printRank()+") ]"
         if self.originalDate:
             retStr+=";"+"( Moved from "+str(self.originalDate.date())+")"
         return retStr;
-        
+
+    def celebration(self):        
+        #handle multiple optionals
+        celeb=""
+        if isinstance(self.descr, list):
+            for i,string in enumerate(self.descr):
+                if i!=0:
+                    celeb += ": or "
+                celeb+=string
+                if isinstance(self.saintrank, list) and self.saintrank[i]:
+                    celeb+=", " + str(self.saintrank[i])
+        else:
+            celeb+=self.descr
+            if self.saintrank:
+                celeb+=", " + str(self.saintrank)
+        return celeb
+
+    def printSaint(self):
+        st=""
+        if isinstance(self.saintrank, list):
+            for i,string in enumerate(self.saintrank):
+                if i!=0:
+                    st += " : "
+                st+=string
+        else:
+            st+=self.saintrank
+        return st
+
+    def printColor(self):
+        if self.color == Colors.GREEN:
+            return "Green"
+        elif self.color == Colors.WHITE:
+            return "White"
+        elif self.color == Colors.RED:
+            return "Red"
+        elif self.color == Colors.PURPLE:
+            return "Purple"
+        elif self.color == Colors.ROSE:
+            return "Rose"
+        elif self.color == Colors.BLACK:
+            return "Black"
+        elif self.color == Colors.GOLD:
+            return "White with Gold ornaments"
+        elif self.color == Colors.BLUE:
+            return "Blue"
+        else:
+            return "No color"
+
+    def printRank(self):
+        if self.rank==Ranks.SOLEMNITY:
+            return "Solemnity"
+        elif self.rank==Ranks.LORD:
+            return "Feast of the Lord"
+        elif self.rank==Ranks.FEAST:
+            return "Feast"
+        elif self.rank==Ranks.MEMORIAL:
+            return "Memorial"
+        elif self.rank==Ranks.OPTIONAL:
+            return "Optional Memorial"
+        elif self.rank==Ranks.WEEKDAY:
+            return "Weekday"
+        elif self.rank==Ranks.COMMEMORATION:
+            return "Commemoration"
+        elif self.rank==Ranks.SUNDAY:
+            return "Sunday"
+        elif self.rank==Ranks.ASHWED:
+            return "Ash Wednesday"
+        elif self.rank==Ranks.HOLYWEEK:
+            return "Holy Week"
+        elif self.rank==Ranks.TRIDUUM:
+            return "Triduum"
+        else:
+            return "No rank"
 
         
         

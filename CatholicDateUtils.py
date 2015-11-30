@@ -25,12 +25,14 @@
 
 import calendar
 import csv
+import traceback
 
 from dateutil import rrule
 from dateutil.easter import *
 from datetime import date
 from datetime import datetime
 from datetime import timedelta
+from collections import OrderedDict
 
 from LiturgicalUtils import *
 
@@ -523,7 +525,7 @@ def genCelebration(season, week, dow):
 
 
 
-def computeCalendar(year, verbose=True):
+def computeCalendar(year, continent=None, country=None, diocese=None, order=None, verbose=True):
     "Compute the whole calendar for given year"
     numdays=365
     if(calendar.isleap(year)):
@@ -848,8 +850,11 @@ def computeCalendar(year, verbose=True):
 
 
      #= Fixed celebrations ==========================================
-    #TODO generate fixed calendar depending on requested country and diocese/order
-    fixedCal=generateGeneralFixedCalendar(year)
+    fixedCalDic=generateGeneralFixedCalendar(year)
+    if continent:
+        fixedCalDic=generateProperFixedCalendar(year,fixedCalDic,continent,country,diocese,order)
+
+    fixedCal=fixedCalDic.values()
     for fday in fixedCal:
         fdoy=fday.date.timetuple().tm_yday - 1
         day=cal[fdoy]
@@ -878,7 +883,6 @@ def computeCalendar(year, verbose=True):
 #       When a Feast of the Lord, or a Solemnity occurs on a Sunday in
 #       Lent, Advent, or Easter, transfer it to the following day.
 #       Otherwise, overwrite the Sunday.
-
         if (fday.rank.value > cal[fdoy].rank.value):
             if (cal[fdoy].rank == Ranks.SUNDAY and
 	     (cal[fdoy].season == Seasons.LENT or 
@@ -887,13 +891,14 @@ def computeCalendar(year, verbose=True):
                 fdoy+=1
                 if not moved:
                     moved=True
-                print " >> dont overwrite non-ordinary sunday"
+                if(verbose):
+                    print " >> dont overwrite non-ordinary sunday"
                 
             day=cal[fdoy]
             if(verbose):
                 print day.date.date(),day.rank, day.descr, "is overwritten by", fday.descr, fday.rank
             day.descr=fday.descr
-            day.saintrank=day.saintrank
+            day.saintrank=fday.saintrank
             if moved:
                 day.originalDate=fday.date
 #           If the rank of the fixed celebration is less than a Feast
@@ -906,7 +911,8 @@ def computeCalendar(year, verbose=True):
 #           celebration replaces the color of the seasonal celebration.
             rk=fday.rank
             if(rk.value < Ranks.FEAST.value and day.season==Seasons.LENT):
-                print "reducing rank to commemoration"
+                if(verbose):
+                    print "reducing rank to commemoration"
                 rk=Ranks.COMMEMORATION
             elif fday.color!=Colors.NONE:
                 day.color=fday.color
@@ -922,65 +928,157 @@ def computeCalendar(year, verbose=True):
 
 ## PROPER CALENDARS ####################################################
 def generateGeneralFixedCalendar(year):
-    fixed=[]
+    #fixed=[]
+    dico= OrderedDict()
     with open('general.csv', 'rb') as csvfile:
         calreader = csv.reader(csvfile,delimiter=';')
         for row in calreader:
             d=datetime(year, int(float(row[0])),int(float(row[1])))
             rk=parseRank(row[2])
             color=parseColor(row[3])
-            #TODO multiple optional memories
-            celebration=row[4]
-            saint=None
-            if(row[5]!=None and row[5]!=''):
-                saint=row[5]
-            fixed.append(LiturgicalDay(d, color, rk, None, celebration))
-                         
-    return fixed
-
-def generateProperFixedCalendar(year,continent,country=None,diocese=None,order=None):
-    fixed=[]
-    if not continent:
-        return fixed
-    
-    #TODO depth reading of all proper.csv files in path
-    path='Continental/'+continent+"/";
-    # scan if country exists (if requested) ; if so, open it.
-
-    # idem for diocese/order
-    
-    #TODO diocese & order: overwrite all higher levels
-    #TODO fail gracefully
-    with open('Continental/'+continent+"/"+country+'/proper.csv', 'rb') as csvfile:
-        calreader = csv.reader(csvfile,delimiter=';')
-        for row in calreader:
-            dayN=int(float(row[1]))
-            # Negative values are meant to designate last sunday of the given month
-            # (yay mobile fixed feasts !)
-            if dayN==-1:
-                #TODO compute last sunday of the month
-                dayN=25
+            # There can be up to three optional memories in the general calendar
+            # Dear Pope, plz add no more! :-(
+            celebration=None;
+            size=len(row)
+            if 8<size  and row[8]:
+                celebration=[row[4],row[6],row[8]]
+            elif 6<size and row[6]:
+                celebration=[row[4],row[6]]
+            else:
+                celebration=row[4]
                 
-            d=datetime(year, int(float(row[0])),dayN)
-            rk=parseRank(row[2])
-            color=parseColor(row[3])
-                #TODO multiple saints
-            celebration=row[4]
             saint=None
-            if(row[5]!=None and row[5]!=''):
+            if 9<size and row[9]:
+                saint=[row[5],row[7],row[9]]
+            elif 7<size and row[7]:
+                saint=[row[5],row[7]]
+            elif 5<size and row[5]:
                 saint=row[5]
-            fixed.append(LiturgicalDay(d, color, rk, None, celebration))
-                         
-    return fixed
 
+            dico[str(d.date())]= LiturgicalDay(d, color, rk, None, celebration, saint)
+            #fixed.append(LiturgicalDay(d, color, rk, None, celebration, saint))
+                         
+    return dico
+
+
+def generateProperFixedCalendar(year, dico, continent,country=None,diocese=None,order=None):
+    """Overwrite the general calendar with increasingly local-specific celebrations"""
+    if not continent:
+        return dico
+
+    #read continent
+    path='Continental/'+continent+"/proper.csv";
+    try:
+        with open(path, 'rb') as csvfile:
+            calreader = csv.reader(csvfile,delimiter=';')
+            dico = readFixedProperFile(year,dico,calreader)
+    except Exception as e:
+        print e
+        print traceback.format_exc()
+
+    #read country - if anything fall on the same date as upper level it is overwritten
+    if country:
+        try:
+            path='Continental/'+continent+"/"+country+"/proper.csv";
+            with open(path, 'rb') as csvfile:
+                calreader = csv.reader(csvfile,delimiter=';')            
+                dico = readFixedProperFile(year,dico,calreader)
+        except Exception as e:
+            print e
+            print traceback.format_exc()
+        
+        #read diocese or order
+        if diocese:
+            path='Continental/'+continent+"/"+country+"/"+diocese+"/proper.csv";
+            try:
+                with open(path, 'rb') as csvfile:
+                    calreader = csv.reader(csvfile,delimiter=';')            
+                    dico = readFixedProperFile(year,dico,calreader)
+            except Exception as e:
+                print e
+            print traceback.format_exc()
+                
+        elif order:
+            #TODO
+            path="TODO";
+    ##        try:
+    ##            with open(path, 'rb') as csvfile:
+    ##                calreader = csv.reader(csvfile,delimiter=';')            
+    ##                dico = readFixedProperFile(dico,calreader)
+    ##        except Exception as e:
+    ##            print e
+                              
+    return dico
+
+
+
+def readFixedProperFile(year, dico, calreader):
+    for row in calreader:
+        dayN=int(float(row[1]))
+        # Negative values are meant to designate last sunday of the given month
+        # (yay mobile fixed feasts !)
+        if dayN==-1:
+            #TODO compute last sunday of the month
+            dayN=25
+            
+        d=datetime(year, int(float(row[0])),dayN)
+        rk=parseRank(row[2])
+        color=parseColor(row[3])
+        # Let's hope there will never be multiple optionals on same day for a country...
+        celebration=row[4]
+        saint=None
+        if 5<len(row) and row[5]:
+            saint=row[5]
+        #TODO check what to do with 'deleted' > add to ommited ?
+        #TODO check: what if local with rank < to general? (does it happen ?)
+        key=str(d.date())
+        day=LiturgicalDay(d, color, rk, None, celebration, saint)
+        
+        if key in dico:
+            #don't overwrite optional with optional, append instead
+            if day.rank==Ranks.OPTIONAL and dico[key].rank==Ranks.OPTIONAL:
+                if isinstance(day.descr,list):
+                    if isinstance(dico[key],list):
+                        #Add all
+                        day.descr.extend(dico[key].descr)
+                    else:
+                        #Add str
+                        day.descr.append(dico[key].descr)
+                else:
+                    #convert to list
+                    day.descr=[day.descr]
+                    if isinstance(dico[key],list):
+                        #Add all
+                        day.descr.extend(dico[key].descr)
+                    else:
+                        #Add str
+                        day.descr.append(dico[key].descr)
+                        
+
+            print "## LOCAL:",dico[key].date.date(),dico[key].rank, dico[key].celebration(), "will be overwritten by", day.celebration(), day.rank
+            
+        dico[key]=day
+
+    return dico
+
+
+
+    
 #load properties
 #myprops = dict(line.strip().split('=') 
 #               for line in open('/Path/filename.properties'))
 #               if ("=" in line and 
 #                   not line.startswith("#")))
 
+#check of this gets last sunday of month
+#month = calendar.monthcalendar(2010, 7)
+#mondays = [week[6] for week in month if week[6]>0]
+#print mondays[-1]
+
+
+
 ##from CatholicDateUtils import *
-##cl=computeCalendar(2016)
+##cl=computeCalendar(2016,'Europe','France',verbose=False)
 ##f1=open('./generated_2016.csv','w+')
 ##for day in cl:
 ##    print >>f1, day.printAll()
