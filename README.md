@@ -1,17 +1,18 @@
 # LiturgicalCalendarUtils
-DateTime python extensions to help create and consult a liturgical calendar
-(C) Martin Raynal, 2015
-
-== Dependencies ==
+DateTime python extensions to help create and consult a liturgical calendar<br/>
+(C) Martin Raynal, 2015<br/>
+<br/>
+## Dependencies
 This project references the following python modules:
 * <a href="https://pypi.python.org/pypi/enum34">enum34</a>
 * <a href="https://pypi.python.org/pypi/python-dateutil">dateutil</a>
-== References ==
+
+## References
 * <a href="https://w2.vatican.va/content/paul-vi/en/motu_proprio/documents/hf_p-vi_motu-proprio_19690214_mysterii-paschalis.html">Motu Proprio <i>Mysterii paschalis</i>, Paul VI, 14-02-1969</a>
 * <a href="http://www.romcal.net/norms.html">General Norms for the Liturgical Year and the Calendar, 21-03-1969</a>
 * Decree <i>Celebratio Baptismatis Domini</i>, 7 October 1977
 * <a href="http://www.vatican.va/roman_curia/congregations/ccdds/documents/rc_con_ccdds_doc_20000630_memoria-immaculati-cordis-mariae-virginis_lt.html">Notificatio: DE OCCURRENTIA MEMORIAE OBLIGATORIAE IMMACULATI CORDIS BEATAE MARIAE VIRGINIS, Per Decretum die 01-01-1996</a>
-
+<br/>
 
 <pre>
 == Most functional work is done, still need data feeding and some cleanup. ==
@@ -50,13 +51,13 @@ TODO List
 	
 In fine, I hope to use it for several applications - in particular, to feed the <a href="https://twitter.com/Angelus_LT">@Angelus_LT</a> & @Angelus_FRA twitter accounts with daily hashtags,
 or provide the results as a web service...
-
-= Credits =
-This was inspired by Jan Schreuder's article on CodeProject:
-http://www.codeproject.com/Articles/10860/Calculating-Christian-Holidays
-and the RomCal project:
-http://www.romcal.net/
-It also makes use of the DateUtil python library, especially (obviously?) the easter() function.
-https://labix.org/python-dateutil
-
 </pre>
+<br/>
+## Credits
+This was inspired by Jan Schreuder's article on CodeProject:<br/>
+http://www.codeproject.com/Articles/10860/Calculating-Christian-Holidays<br/>
+and the RomCal project:<br/>
+http://www.romcal.net/<br/>
+It also makes use of the DateUtil python library, especially (obviously?) the easter() function.<br/>
+https://labix.org/python-dateutil<br/>
+
