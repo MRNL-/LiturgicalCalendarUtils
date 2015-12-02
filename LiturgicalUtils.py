@@ -24,6 +24,8 @@
 
 from enum import Enum
 
+import Translation
+
 class Colors(Enum):
     NONE = 0
     GREEN = 1
@@ -141,6 +143,27 @@ class LiturgicalDay:
             retStr+=";"+"( Moved from "+str(self.originalDate.date())+")"
         return retStr;
 
+    def printAll_TR(self,locale):
+        """Prints a csv-formatted string containing all informations pertaining to the day, translated in given locale"""
+        if Translation.getLocale() != locale:
+            try:
+                Translation.setLocale(locale)
+            except Exception as e:
+                print e
+                Translation.setLocale("en-EN")
+            
+        retStr=str(self.date.date())+";"+str(self.season)+";"+Translation.translate(self.printColor())+";"+Translation.translate(self.printRank())+";"+self.translateCelebration()
+        
+        if self.saintrank:
+            retStr+=";"+self.printSaint()
+        else:
+            retStr+=";"
+        if(self.ommitted != None):
+            retStr+=";"+"[ "+Translation.translate("ommited")+" " + self.ommitted.translateCelebration() +" ("+Translation.translate(self.ommitted.printRank())+") ]"
+        if self.originalDate:
+            retStr+=";"+"( "+Translation.translate("mov_from")+" "+str(self.originalDate.date())+")"
+        return retStr;
+
     def celebration(self):        
         #handle multiple optionals
         celeb=""
@@ -155,6 +178,22 @@ class LiturgicalDay:
             celeb+=self.descr
             if self.saintrank:
                 celeb+=", " + str(self.saintrank)
+        return celeb
+
+    def translateCelebration(self):        
+        #handle multiple optionals
+        celeb=""
+        if isinstance(self.descr, list):
+            for i,string in enumerate(self.descr):
+                if i!=0:
+                    celeb += Translation.translate('or_other')+" "
+                celeb+=Translation.translate(string)
+                if isinstance(self.saintrank, list) and self.saintrank[i]:
+                    celeb+=", " + Translation.translate(str(self.saintrank[i]))
+        else:
+            celeb+=Translation.translate(self.descr)
+            if self.saintrank:
+                celeb+=", " + Translation.translate(str(self.saintrank))
         return celeb
 
     def printSaint(self):
@@ -182,37 +221,37 @@ class LiturgicalDay:
         elif self.color == Colors.BLACK:
             return "Black"
         elif self.color == Colors.GOLD:
-            return "White with Gold ornaments"
+            return "Gold"
         elif self.color == Colors.BLUE:
             return "Blue"
         else:
-            return "No color"
+            return "No_color"
 
     def printRank(self):
         if self.rank==Ranks.SOLEMNITY:
-            return "Solemnity"
+            return "rk_sol"
         elif self.rank==Ranks.LORD:
-            return "Feast of the Lord"
+            return "rk_ftL"
         elif self.rank==Ranks.FEAST:
-            return "Feast"
+            return "rk_fst"
         elif self.rank==Ranks.MEMORIAL:
-            return "Memorial"
+            return "rk_mem"
         elif self.rank==Ranks.OPTIONAL:
-            return "Optional Memorial"
+            return "rk_opt"
         elif self.rank==Ranks.WEEKDAY:
-            return "Weekday"
+            return "rk_wkd"
         elif self.rank==Ranks.COMMEMORATION:
-            return "Commemoration"
+            return "rk_com"
         elif self.rank==Ranks.SUNDAY:
-            return "Sunday"
+            return "rk_sun"
         elif self.rank==Ranks.ASHWED:
-            return "Ash Wednesday"
+            return "rk_ash"
         elif self.rank==Ranks.HOLYWEEK:
-            return "Holy Week"
+            return "rk_hwk"
         elif self.rank==Ranks.TRIDUUM:
-            return "Triduum"
+            return "rk_tri"
         else:
-            return "No rank"
+            return "rk_none"
 
         
         

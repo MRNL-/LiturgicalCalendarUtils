@@ -28,6 +28,9 @@ def getLocale():
 
 def setLocale(newlocale):
     global locale, celebrations, saintRanks
+    if newlocale==locale:
+        return
+    
     path="./locale"
     #path="C:\Users\Martin Raynal\Documents\GitHub\LiturgicalCalendarUtils\locale"
     if(newlocale != 'en-EN'):
@@ -53,13 +56,29 @@ for line in open(path)
 def translate(string):
     if string in celebrations.keys():
         return celebrations[string]
-    else: #assume a saint rank
+    else:
+        if '%' in string:
+            #ferial weekday
+            allStr=string.split('%')
+            size=len(allStr)-1
+            retStr=""
+            for i,s in enumerate(allStr):
+                retStr+=celebrations[s]
+                if i<size:
+                    retStr+=" "
+                
+            return retStr
+        
+        #assume a saint rank
         allStr=string.strip().split('&')
         retStr=""
         size=len(allStr)-1
         for i,s in enumerate(allStr):
             #todo '|'
-            retStr+=saintRanks[s]
+            if s in saintRanks.keys():
+                retStr+=saintRanks[s]
+            else:
+                retStr+="[ "+s+": KEY_NOT_FOUND ]"
             if i<size:
                 retStr+=" & "
         return retStr

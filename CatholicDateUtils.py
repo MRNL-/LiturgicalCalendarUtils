@@ -36,20 +36,20 @@ from collections import OrderedDict
 
 from LiturgicalUtils import *
 
-seatab=["Ordinary Time",
-        "Advent",
-        "Christmas",
-        "Lent",
-        "Easter"]
+seatab=["ordinary",
+        "advent",
+        "christmas",
+        "lent",
+        "easter"]
 daytab=["",
-        "Monday",
-        "Tuesday",
-        "Wednesday",
-        "Thursday",
-        "Friday",
-        "Saturday",
-        "Sunday"]           
-numtab = ["",
+        "monday",
+        "tuesday",
+        "wednesday",
+        "thursday",
+        "friday",
+        "saturday",
+        "sunday"]           
+numtab = ["First_F",
           "First",
           "Second",
           "Third",
@@ -70,59 +70,48 @@ numtab = ["",
           "Eighteenth",
           "Nineteenth"]
 epbefore=["",
-      "Monday before Epiphany",
-      "Tuesday before Epiphany",
-      "Wednesday before Epiphany",
-      "Thursday before Epiphany",
-      "Friday before Epiphany",
-      "Saturday before Epiphany"]
+          "epiphany_Monday_BF",
+          "epiphany_Tuesday_BF",
+          "epiphany_Wednesday_BF",
+          "epiphany_Thursday_BF",
+          "epiphany_Friday_BF",
+          "epiphany_Saturday_BF",
+          ""]
 epoctave=["",
-      "Monday after Epiphany",
-      "Tuesday after Epiphany",
-      "Wednesday after Epiphany",
-      "Thursday after Epiphany",
-      "Friday after Epiphany",
-      "Saturday after Epiphany"]
+      "epiphany_Monday_AF",
+      "epiphany_Tuesday_AF",
+      "epiphany_Wednesday_AF",
+      "epiphany_Thursday_AF",
+      "epiphany_Friday_AF",
+      "epiphany_Saturday_AF"]
 
-ep = "Epiphany of the Lord"
-bl = "Baptism of the Lord"
+ash_week=["ash_wed",
+          "ash_thu",
+          "ash_fri",
+          "ash_sat"]
+holy_week=["palm_sun",
+           "holy_mon",
+           "holy_tue",
+           "holy_wed",
+           "holy_thu",
+           "holy_fri",
+           "holy_sat"]
 
-ash_week=["Ash Wednesday",
-      "Thursday after Ash Wednesday",
-      "Friday after Ash Wednesday",
-      "Saturday after Ash Wednesday"]
-holy_week=["Palm Sunday",
-      "Monday of Holy Week",
-      "Tuesday of Holy Week",
-      "Wednesday of Holy Week",
-      "Holy Thursday",
-      "Good Friday",
-      "Easter Vigil"]
+eaoctave=["easter_sun",
+          "east_mon",
+          "east_tue",
+          "east_wed",
+          "east_thu",
+          "east_fri",
+          "east_sat",
+          "east_sun2"]
 
-eaoctave=["Easter Sunday",
-      "Monday in the Octave of Easter",
-      "Tuesday in the Octave of Easter",
-      "Wednesday in the Octave of Easter",
-      "Thursday in the Octave of Easter",
-      "Friday in the Octave of Easter",
-      "Saturday in the Octave of Easter",
-      "Second Sunday of Easter 'In Albis' - Divine Mercy Sunday"]
-asc= "Ascension of the Lord";
-pen = "Pentecost Sunday";
-tri = "Trinity Sunday";
-cc = "Corpus Christi";
-shJ = "Sacred Heart of Jesus";
-ihM = "Immaculate Heart of Mary";
-
-ck = "Christ the King";
-
-hf = "Holy Family"
-cmoctave = ["Second day in the Octave of Christmas",
-            "Third day in the Octave of Christmas",
-            "Fourth day in the Octave of Christmas",
-            "Fifth day in the Octave of Christmas",
-            "Sixth day in the Octave of Christmas",
-            "Seventh day in the Octave of Christmas"]
+cmoctave = ["xmas_oct_2",
+            "xmas_oct_3",
+            "xmas_oct_4",
+            "xmas_oct_5",
+            "xmas_oct_6",
+            "xmas_oct_7"]
 
 #===================================================
 
@@ -496,17 +485,24 @@ def genCelebration(season, week, dow):
     elif (week == 30):
            numstring="Thirtieth"
     elif (week > 30):
-           numstring="Thirty-" + numtab[week % 10]
+           numstring="Thirty_" + numtab[week % 10]
     elif (week > 20):
-           numstring="Twenty-" + numtab[week % 10]
+           numstring="Twenty_" + numtab[week % 10]
     else:
-           numstring=numtab[week]
+        if week==1 and dow!=7:
+            week=0 #'First' key for weeks != key for sundays
+        numstring=numtab[week]
 
+    #special cases for "of"
+    sd_of="%of1%"
+    if(season==Seasons.ORDINARY or season==Seasons.LENT):#TODO double-check for lent
+        sd_of="%of2%"
     #special case for sunday
     if (dow == 7):
-           retval +=numstring + " Sunday of " + seatab[season.value]
+        
+        retval +=numstring + "%sunday_of" + sd_of + seatab[season.value]
     else:
-        weekly=" of the " + numstring + " Week of " + seatab[season.value]
+        weekly="%of_the%" + numstring + "%week_of" + sd_of + seatab[season.value]
         #TODO: option to toggle ember days
         #TODO: english proper names
         #if(season==Seasons.LENT and week==1):
@@ -527,10 +523,7 @@ def genCelebration(season, week, dow):
 
 def computeCalendar(year, continent=None, country=None, diocese=None, order=None, verbose=True):
     "Compute the whole calendar for given year"
-    numdays=365
-    if(calendar.isleap(year)):
-       numdays=366
-
+    
     #init the calendar
     cal=[]
     yeardates=list(rrule.rrule(rrule.DAILY,dtstart=date(year,1,1),until=date(year,12,31)))
@@ -558,7 +551,7 @@ def computeCalendar(year, continent=None, country=None, diocese=None, order=None
 
         # -- Epiphany
         epi=cal[5]
-        epi.descr=ep
+        epi.descr="epiphany"
         epi.season = Seasons.CHRISTMAS
         epi.color = Colors.WHITE
         epi.rank=Ranks.SOLEMNITY
@@ -575,7 +568,7 @@ def computeCalendar(year, continent=None, country=None, diocese=None, order=None
         
         # -- Baptism of the Lord 
         bL=cal[bld]
-        bL.descr=bl
+        bL.descr="baptismOtL"
         bL.season = Seasons.CHRISTMAS
         bL.color = Colors.WHITE
         bL.rank=Ranks.LORD
@@ -583,9 +576,11 @@ def computeCalendar(year, continent=None, country=None, diocese=None, order=None
         #The Baptism of the Lord is moved to the Monday after Epiphany if the year starts on monday or sunday.
         #Otherwise, it is the Sunday following Epiphany.
         jan1 = Sol_MaryMotherOfGod(year).isoweekday()
+        if jan1==7:
+            jan1 = 0
         epd = 7 - jan1
         bld = epd + 7
-        if jan1==7 or jan1 == 1: #sunday or monday
+        if jan1==0 or jan1 == 1: #sunday or monday
             bld=epd+1
 
         for i,day in enumerate(cal[:bld+1]):
@@ -595,10 +590,10 @@ def computeCalendar(year, continent=None, country=None, diocese=None, order=None
             if i < epd:
                 day.descr=epbefore[dow]
             elif i == epd:
-                day.descr=ep
+                day.descr="epiphany"
                 day.rank=Ranks.SOLEMNITY
             elif i == bld:
-                day.descr=bl
+                day.descr="baptismOtL"
                 day.rank=Ranks.LORD
             elif i > epd:
                 day.descr=epoctave[dow]
@@ -693,7 +688,7 @@ def computeCalendar(year, continent=None, country=None, diocese=None, order=None
     # -- Pentecost Sunday
     pentecost=easter+49
     ps = cal[pentecost]
-    ps.descr = pen
+    ps.descr = "pen"
     ps.season = Seasons.EASTER
     ps.color = Colors.RED
     ps.rank = Ranks.SOLEMNITY
@@ -716,7 +711,7 @@ def computeCalendar(year, continent=None, country=None, diocese=None, order=None
     # -- Ascension Thursday
     ast=easter+39
     at = cal[ast]
-    at.descr = asc
+    at.descr = "asc"
     at.season = Seasons.EASTER
     at.color = Colors.WHITE
     at.rank = Ranks.SOLEMNITY
@@ -724,16 +719,17 @@ def computeCalendar(year, continent=None, country=None, diocese=None, order=None
     # -- Trinity Sunday
     tns=easter+56
     trinity = cal[tns]
-    trinity.descr = tri
+    trinity.descr = "tri"
     trinity.season = Seasons.ORDINARY
     trinity.color = Colors.WHITE
     trinity.rank = Ranks.SOLEMNITY
     
     # -- Corpus Christi
     # ---- fall on Sunday in France
+    # TODO option for thursday
     ccd=easter+63
     corpusC = cal[ccd]
-    corpusC.descr = cc
+    corpusC.descr = "cc"
     corpusC.season = Seasons.ORDINARY
     corpusC.color = Colors.WHITE
     corpusC.rank = Ranks.SOLEMNITY
@@ -741,7 +737,7 @@ def computeCalendar(year, continent=None, country=None, diocese=None, order=None
     # -- Sacred Heart
     ccd=easter+68
     corpusC = cal[ccd]
-    corpusC.descr = shJ
+    corpusC.descr = "shJ"
     corpusC.season = Seasons.ORDINARY
     corpusC.color = Colors.WHITE
     corpusC.rank = Ranks.SOLEMNITY
@@ -749,7 +745,7 @@ def computeCalendar(year, continent=None, country=None, diocese=None, order=None
     # -- Immaculate Heart of Mary
     ihd=easter+69
     imHM = cal[ihd]
-    imHM.descr = ihM
+    imHM.descr = "ihM"
     imHM.season = Seasons.ORDINARY
     imHM.color = Colors.WHITE
     imHM.rank = Ranks.MEMORIAL
@@ -772,12 +768,13 @@ def computeCalendar(year, continent=None, country=None, diocese=None, order=None
 
     # -- Christ the King
     ckd=cal[advent1-7]
-    ckd.descr=ck
+    ckd.descr = "ck"
     ckd.season = Seasons.ORDINARY
     ckd.color = Colors.WHITE
     ckd.rank = Ranks.SOLEMNITY
     
     # -- Fill Advent season
+    # ---- Todo? enforce IV.16.b (weekdays of advent from 17/12 to 24 have precedence over memorials)
     week = 1
     dow = 1
     for i,day in enumerate(cal[advent1+1:cdoy]):
@@ -797,8 +794,7 @@ def computeCalendar(year, continent=None, country=None, diocese=None, order=None
 
 
     #= Christmas Time ==============================================    
-    # -- Fill the week following Christmas.
-    # ---- The Sunday between Dec. 26 and Dec.31 is Holy Family    
+    # -- Fill the week following Christmas.   
     dec26=cdoy+1
     for i,day in enumerate(cal[dec26:]):
         
@@ -807,7 +803,8 @@ def computeCalendar(year, continent=None, country=None, diocese=None, order=None
         
         dow=day.date.isoweekday()        
         if(dow==7):
-            day.descr = hf
+    # ---- The Sunday between Dec. 26 and Dec.31 is Holy Family 
+            day.descr = "hf"
             day.rank = Ranks.LORD
         else:
             day.descr = cmoctave[i]
@@ -816,12 +813,13 @@ def computeCalendar(year, continent=None, country=None, diocese=None, order=None
     if(cdow==7):
         dec30=HolyFamily(year).timetuple().tm_yday - 1
         hfd=cal[dec30]
-        hfd.descr = hf
+        hfd.descr = "hf"
         hfd.rank = Ranks.LORD
-        hfd.season = Seasons.CHRISTMAS
-        hfd.color = Colors.WHITE
+        #hfd.season = Seasons.CHRISTMAS
+        #hfd.color = Colors.WHITE
 
     #= Ordinary Time ===============================================
+    # TODO: on saturdays in ordinary time, add opt. mem. of Blessed Virgin mary?
     # -- First part
     week=1
     for day in cal[bld+1:iaw]:
@@ -879,11 +877,18 @@ def computeCalendar(year, continent=None, country=None, diocese=None, order=None
                 if not moved:
                     moved=True
         #- end -----------------------------
-                
-#       When a Feast of the Lord, or a Solemnity occurs on a Sunday in
-#       Lent, Advent, or Easter, transfer it to the following day.
-#       Otherwise, overwrite the Sunday.
-        if (fday.rank.value > cal[fdoy].rank.value):
+
+        # Special case of Immaculate Heart of Mary
+        # (cf. notification Per Decretum Die)
+        # http://www.vatican.va/roman_curia/congregations/ccdds/documents/rc_con_ccdds_doc_20000630_memoria-immaculati-cordis-mariae-virginis_lt.html
+        if(fday.rank==cal[fdoy].rank and fday.rank==Ranks.MEMORIAL and cal[fdoy].descr=="ihM"):
+            # Dont overwrite, but consider both memorials as optionals
+            cal[fdoy].descr=[cal[fdoy].descr, fday.descr]
+            
+        elif (fday.rank.value > cal[fdoy].rank.value):        
+#           When a Feast of the Lord, or a Solemnity occurs on a Sunday in
+#           Lent, Advent, or Easter, transfer it to the following day.
+#           Otherwise, overwrite the Sunday.
             if (cal[fdoy].rank == Ranks.SUNDAY and
 	     (cal[fdoy].season == Seasons.LENT or 
 	      cal[fdoy].season == Seasons.ADVENT or
@@ -1014,14 +1019,19 @@ def generateProperFixedCalendar(year, dico, continent,country=None,diocese=None,
 
 def readFixedProperFile(year, dico, calreader):
     for row in calreader:
+        month=int(float(row[0]))
         dayN=int(float(row[1]))
         # Negative values are meant to designate last sunday of the given month
         # (yay mobile fixed feasts !)
+        # e.g. france: last sunday of october is date of dedication of churches
+        # for which date is not known
         if dayN==-1:
-            #TODO compute last sunday of the month
-            dayN=25
+            #compute last sunday of the month
+            c = calendar.Calendar(firstweekday = 0)
+            flatter = sum(c.monthdays2calendar(year, month), [])
+            dayN={b: a for (a, b) in flatter if a}[6]
             
-        d=datetime(year, int(float(row[0])),dayN)
+        d=datetime(year, month,dayN)
         rk=parseRank(row[2])
         color=parseColor(row[3])
         # Let's hope there will never be multiple optionals on same day for a country...
@@ -1031,7 +1041,11 @@ def readFixedProperFile(year, dico, calreader):
             saint=row[5]
         #TODO check what to do with 'deleted' > add to ommited ?
         #TODO check: what if local with rank < to general? (does it happen ?)
+        #TODO add special case to remove a date from general
+        #   example: St Pierre Canisius (Suisse) 27/04 instead of 21/12 with no replacement
         key=str(d.date())
+        #if rk == Ranks.WEEKDAY
+        ##delete from dict
         day=LiturgicalDay(d, color, rk, None, celebration, saint)
         
         if key in dico:
@@ -1063,12 +1077,6 @@ def readFixedProperFile(year, dico, calreader):
 
 
 
-    
-#load properties
-#myprops = dict(line.strip().split('=') 
-#               for line in open('/Path/filename.properties'))
-#               if ("=" in line and 
-#                   not line.startswith("#")))
 
 #check of this gets last sunday of month
 #month = calendar.monthcalendar(2010, 7)
@@ -1078,10 +1086,10 @@ def readFixedProperFile(year, dico, calreader):
 
 
 ##from CatholicDateUtils import *
-##cl=computeCalendar(2016,'Europe','France',verbose=False)
-##f1=open('./generated_2016.csv','w+')
+##cl=computeCalendar(2017,'Europe','France',verbose=False)
+##f1=open('./generated_2017.csv','w+')
 ##for day in cl:
-##    print >>f1, day.printAll()
+##    print >>f1, day.printAll_TR('fr-FR')
  #     print >>f1, day.date.date(),";", day.color,";", day.rank,";", day.descr,";", day.season  
 #for day in cl:
 #    print >>f1, day.printAll()

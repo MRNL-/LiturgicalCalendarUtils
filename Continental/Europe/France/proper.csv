@@ -1,11 +1,11 @@
-1;3;O;-;Saint Genevieve;V
-1;15;O;-;Saint Remigius;B
-2;18;O;-;Saint Bernadette Soubirous;V
-5;19;O;-;Saint Ivo;p
-5;30;M;W;Saint Joan of Arc, secondary patroness of France;V
-6;2;O;-;Saint Pothinus, bishop, Saint Blandina, virgin, and their companions;Mm
-6;4;O;-;Saint Clotilde;
-8;15;S;W;Assumption of the Blessed Virgin Mary, principal patroness of France
-8;26;O;-;Saint Caesarius of Arles;B
-10;1;M;W;Saint Thérèse of the Child Jesus, secondary patroness of France;V
-10;-1;S;W;Dedication of Churches for which date is unknown
+1;3;O;-;genevieve;V
+1;15;O;-;remi;B
+2;18;O;-;bernadette_soubirous;V
+5;19;O;-;yves;p
+5;30;M;W;jeanne_darc;V
+6;2;O;-;pothin_co;Mm
+6;4;O;-;clotilde;Q
+8;15;S;W;mary_assumption_FRA
+8;26;O;-;cesaire;B
+10;1;M;W;therese_enfant_jesus_FRA;V&D
+10;-1;S;W;ded_unknown
