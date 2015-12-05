@@ -521,7 +521,7 @@ def genCelebration(season, week, dow):
 
 
 
-def computeCalendar(year, continent=None, country=None, diocese=None, order=None, verbose=True):
+def computeCalendar(year, continent=None, country=None, diocese=None, order=None, verbose=False):
     "Compute the whole calendar for given year"
     
     #init the calendar
@@ -994,24 +994,24 @@ def generateProperFixedCalendar(year, dico, continent,country=None,diocese=None,
         
         #read diocese or order
         if diocese:
-            path='Continental/'+continent+"/"+country+"/"+diocese+"/proper.csv";
+            path='Continental/'+continent+"/"+country+"/Episcopal/"+diocese+"/proper.csv";
             try:
                 with open(path, 'rb') as csvfile:
                     calreader = csv.reader(csvfile,delimiter=';')            
                     dico = readFixedProperFile(year,dico,calreader)
             except Exception as e:
                 print e
-            print traceback.format_exc()
+                print traceback.format_exc()
                 
         elif order:
-            #TODO
-            path="TODO";
-    ##        try:
-    ##            with open(path, 'rb') as csvfile:
-    ##                calreader = csv.reader(csvfile,delimiter=';')            
-    ##                dico = readFixedProperFile(dico,calreader)
-    ##        except Exception as e:
-    ##            print e
+            path='Continental/'+continent+"/"+country+"/Orders/"+order+".csv";
+            try:
+                with open(path, 'rb') as csvfile:
+                    calreader = csv.reader(csvfile,delimiter=';')            
+                    dico = readFixedProperFile(year,dico,calreader)
+            except Exception as e:
+                print e
+                print traceback.format_exc()
                               
     return dico
 
@@ -1075,8 +1075,13 @@ def readFixedProperFile(year, dico, calreader):
 
     return dico
 
-
-
+def printCSVCalendar(year,continent,country,order):
+    '''Outputs the roman calendar of given year in CSV format'''
+    cl=computeCalendar(year,continent,country,order=order)
+    f1=open('./generated_'+str(year)+'.csv','w+')
+    for day in cl:
+        print >>f1, day.printAll_TR('fr-FR')
+    f1.close()
 
 #check of this gets last sunday of month
 #month = calendar.monthcalendar(2010, 7)
@@ -1086,10 +1091,10 @@ def readFixedProperFile(year, dico, calreader):
 
 
 ##from CatholicDateUtils import *
-##cl=computeCalendar(2017,'Europe','France',verbose=False)
-##f1=open('./generated_2017.csv','w+')
+##cl=computeCalendar(2015,'Europe','France',order='CSM',verbose=False)
+##f1=open('./generated_2015_CSM.csv','w+')
 ##for day in cl:
 ##    print >>f1, day.printAll_TR('fr-FR')
- #     print >>f1, day.date.date(),";", day.color,";", day.rank,";", day.descr,";", day.season  
+#    print >>f1, day.date.date(),";", day.color,";", day.rank,";", day.descr,";", day.season  
 #for day in cl:
 #    print >>f1, day.printAll()
