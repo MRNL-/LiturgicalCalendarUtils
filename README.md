@@ -12,6 +12,7 @@ This project references the following python modules:
 * <a href="http://www.romcal.net/norms.html">General Norms for the Liturgical Year and the Calendar, 21-03-1969</a>
 * Decree <i>Celebratio Baptismatis Domini</i>, 7 October 1977
 * <a href="http://www.vatican.va/roman_curia/congregations/ccdds/documents/rc_con_ccdds_doc_20000630_memoria-immaculati-cordis-mariae-virginis_lt.html">Notificatio: DE OCCURRENTIA MEMORIAE OBLIGATORIAE IMMACULATI CORDIS BEATAE MARIAE VIRGINIS, Per Decretum die 01-01-1996</a>
+*  <a href="http://press.vatican.va/content/salastampa/it/bollettino/pubblico/2016/06/10/0422/00974.html">Apostolorum Apostola - Decretum CCDDS 03-06-2016</a>
 <br/>
 
 <pre>
