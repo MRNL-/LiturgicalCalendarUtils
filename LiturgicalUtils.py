@@ -253,6 +253,15 @@ class LiturgicalDay:
         else:
             return "rk_none"
 
+
+class LiturgicalOptions:
+    """This struct stores informations regarding the liturgical rules"""
+    def __init__(self, epiphany_fixed=false, ascension_thu=true, corpusChristi_thu=false, opt_mem_mary_sat=false):
+        self.epiphany_fixed=epiphany_fixed
+        self.ascension_thu=ascension_thu
+        self.corpusChristi_thu=corpusChristi_thu
+        self.opt_mem_mary_sat=opt_mem_mary_sat
+
         
         
 

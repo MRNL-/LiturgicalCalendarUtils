@@ -3,7 +3,7 @@
 #----------------------------------------------------------------------------------#
 # Catholic DateUtils
 # https://github.com/MRNL-/LiturgicalCalendarUtils
-# (C) Martin Raynal, 2015
+# (C) Martin Raynal, 2015-2016
 #----------------------------------------------------------------------------------#
 # The Calendar part of this module is inspired by and based on ROMCAL 6.2
 # ROMCAL is Copyright (C) 1993-2003 Kenneth G. Bath (kbath@harris.com)
@@ -35,6 +35,9 @@ from datetime import timedelta
 from collections import OrderedDict
 
 from LiturgicalUtils import *
+
+# Default options on init
+liturgicalOptions = LiturgicalOptions()
 
 seatab=["ordinary",
         "advent",
@@ -476,6 +479,9 @@ def StMartin(year):
 def genCelebration(season, week, dow):
     "Returns the general name of a celebration given a season, a week number, and a day of the week"
 
+    if (dow == 6 and season==Seasons.ORDINARY and liturgicalOptions.opt_mem_mary_sat):
+        return "opt_mem_mary"
+    
     numstring=None
     retval=""
 
@@ -505,12 +511,13 @@ def genCelebration(season, week, dow):
         weekly="%of_the%" + numstring + "%week_of" + sd_of + seatab[season.value]
         #TODO: option to toggle ember days
         #TODO: english proper names
+        #TODO: only wednesday, friday & saturday
         #if(season==Seasons.LENT and week==1):
         #    weekly=" of the Spring Embers Days"
         #if(season==Seasons.ADVENT and week==3):
         #    weekly=" of the Advent Embers Days"
         #TODO: week after pentecost & week after Triumph of the Cross
-        #if(season==S easons.ORDINARY and week==6):
+        #if(season==Seasons.ORDINARY and week==6):
         #    weekly=" of the Summer Embers Days"        
         #if(season==Seasons.ORDINARY and week==30):
         #    weekly=" of the Fall Embers Days"
@@ -536,8 +543,8 @@ def computeCalendar(year, continent=None, country=None, diocese=None, order=None
 
     #= Christmas Time == from the start of the year ================
     bld=10
-    #TODO: option for Epiphany on Jan.6
-    if False:
+    #If Epiphany on Jan.6
+    if liturgicalOptions.epiphany_fixed:
         # -- Days before Epiphany
         for day in cal[0:5]:        
             day.season = Seasons.CHRISTMAS
@@ -709,6 +716,7 @@ def computeCalendar(year, continent=None, country=None, diocese=None, order=None
             dow+=1
 
     # -- Ascension Thursday
+    # TODO option for sunday
     ast=easter+39
     at = cal[ast]
     at.descr = "asc"
@@ -819,7 +827,6 @@ def computeCalendar(year, continent=None, country=None, diocese=None, order=None
         #hfd.color = Colors.WHITE
 
     #= Ordinary Time ===============================================
-    # TODO: on saturdays in ordinary time, add opt. mem. of Blessed Virgin mary?
     # -- First part
     week=1
     for day in cal[bld+1:iaw]:
@@ -829,6 +836,10 @@ def computeCalendar(year, continent=None, country=None, diocese=None, order=None
             day.descr=genCelebration(Seasons.ORDINARY, week, dow)
             day.season = Seasons.ORDINARY
             day.color = Colors.GREEN
+
+            # Saturdays as optional Memorial of Mary
+            if(d.isoweekday()==6 and liturgicalOptions.opt_mem_mary_sat):
+                day.rank=Ranks.OPTIONAL
             
             if dow == 6:
                 week+=1
@@ -941,7 +952,7 @@ def generateGeneralFixedCalendar(year):
             d=datetime(year, int(float(row[0])),int(float(row[1])))
             rk=parseRank(row[2])
             color=parseColor(row[3])
-            # There can be up to three optional memories in the general calendar
+            # There can be up to three optional memorials in the general calendar
             # Dear Pope, plz add no more! :-(
             celebration=None;
             size=len(row)
@@ -1035,6 +1046,7 @@ def readFixedProperFile(year, dico, calreader):
         rk=parseRank(row[2])
         color=parseColor(row[3])
         # Let's hope there will never be multiple optionals on same day for a country...
+        # TODO: handle multiple (2/6 in AUCH has multiple local memorials !!! :( )
         celebration=row[4]
         saint=None
         if 5<len(row) and row[5]:
