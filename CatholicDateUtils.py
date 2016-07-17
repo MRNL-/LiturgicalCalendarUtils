@@ -1005,7 +1005,7 @@ def generateProperFixedCalendar(year, dico, continent,country=None,diocese=None,
         
         #read diocese or order
         if diocese:
-            path='Continental/'+continent+"/"+country+"/Episcopal/"+diocese+"/proper.csv";
+            path='Continental/'+continent+"/"+country+"/Diocese/"+diocese+".csv";
             try:
                 with open(path, 'rb') as csvfile:
                     calreader = csv.reader(csvfile,delimiter=';')            
@@ -1053,6 +1053,8 @@ def readFixedProperFile(year, dico, calreader):
             saint=row[5]
         #TODO check what to do with 'deleted' > add to ommited ?
         #TODO check: what if local with rank < to general? (does it happen ?)
+        ## Yes it does > Blois, 17/11; Memorial of St Elizabeth of Hungary is reduced to optional
+        ## to accomodate for opt.mem. of St Aignan
         #TODO add special case to remove a date from general
         #   example: St Pierre Canisius (Suisse) 27/04 instead of 21/12 with no replacement
         key=str(d.date())
@@ -1063,22 +1065,25 @@ def readFixedProperFile(year, dico, calreader):
         if key in dico:
             #don't overwrite optional with optional, append instead
             if day.rank==Ranks.OPTIONAL and dico[key].rank==Ranks.OPTIONAL:
-                if isinstance(day.descr,list):
-                    if isinstance(dico[key],list):
-                        #Add all
-                        day.descr.extend(dico[key].descr)
-                    else:
-                        #Add str
-                        day.descr.append(dico[key].descr)
-                else:
+                if not isinstance(day.descr,list):
                     #convert to list
-                    day.descr=[day.descr]
-                    if isinstance(dico[key],list):
-                        #Add all
-                        day.descr.extend(dico[key].descr)
-                    else:
-                        #Add str
-                        day.descr.append(dico[key].descr)
+                    day.descr=[day.descr]                    
+                if not isinstance(day.saintrank,list):
+                    day.saintrank=[day.saintrank]
+                    
+                if isinstance(dico[key].descr,list):
+                    #Add all
+                    day.descr.extend(dico[key].descr)
+                else:
+                    #Add str
+                    day.descr.append(dico[key].descr)
+                    
+                if isinstance(dico[key].saintrank,list):
+                    #Add all
+                    day.saintrank.extend(dico[key].saintrank)
+                else:
+                    #Add str
+                    day.saintrank.append(dico[key].saintrank)
                         
 
             print "## LOCAL:",dico[key].date.date(),dico[key].rank, dico[key].celebration(), "will be overwritten by", day.celebration(), day.rank
@@ -1087,9 +1092,9 @@ def readFixedProperFile(year, dico, calreader):
 
     return dico
 
-def printCSVCalendar(year,continent,country,order):
+def printCSVCalendar(year,continent,country,diocese,order):
     '''Outputs the roman calendar of given year in CSV format'''
-    cl=computeCalendar(year,continent,country,order=order)
+    cl=computeCalendar(year,continent,country,diocese=diocese,order=order)
     f1=open('./generated_'+str(year)+'.csv','w+')
     for day in cl:
         print >>f1, day.printAll_TR('fr-FR')

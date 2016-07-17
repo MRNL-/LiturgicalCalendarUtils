@@ -202,9 +202,9 @@ class LiturgicalDay:
             for i,string in enumerate(self.saintrank):
                 if i!=0:
                     st += " : "
-                st+=string
+                st+=str(string)
         else:
-            st+=self.saintrank
+            st+=str(self.saintrank)
         return st
 
     def printColor(self):
@@ -256,7 +256,7 @@ class LiturgicalDay:
 
 class LiturgicalOptions:
     """This struct stores informations regarding the liturgical rules"""
-    def __init__(self, epiphany_fixed=false, ascension_thu=true, corpusChristi_thu=false, opt_mem_mary_sat=false):
+    def __init__(self, epiphany_fixed=False, ascension_thu=True, corpusChristi_thu=False, opt_mem_mary_sat=False):
         self.epiphany_fixed=epiphany_fixed
         self.ascension_thu=ascension_thu
         self.corpusChristi_thu=corpusChristi_thu
