@@ -80,7 +80,11 @@ def translate(string):
             else:
                 retStr+="[ "+s+": KEY_NOT_FOUND ]"
             if i<size:
-                retStr+=" & "
+                if i==size-1:
+                    retStr+=" & "
+                else:
+                    retStr+=", "
+                    #Handle multiple ranks (patron, titular of cathedral, ...)
         return retStr
 
 #--------------------------------------
