@@ -802,7 +802,11 @@ def computeCalendar(year, continent=None, country=None, diocese=None, order=None
 
 
     #= Christmas Time ==============================================    
-    # -- Fill the week following Christmas.   
+    # -- Christmas itself is defined in fixed calendar
+    noel=cal[cdoy]
+    noel.season = Seasons.CHRISTMAS
+    
+    # -- Fill the week following Christmas.
     dec26=cdoy+1
     for i,day in enumerate(cal[dec26:]):
         
@@ -861,7 +865,7 @@ def computeCalendar(year, continent=None, country=None, diocese=None, order=None
      #= Fixed celebrations ==========================================
     fixedCalDic=generateGeneralFixedCalendar(year)
     if continent:
-        fixedCalDic=generateProperFixedCalendar(year,fixedCalDic,continent,country,diocese,order)
+        fixedCalDic=generateProperFixedCalendar(year,fixedCalDic,continent,country,diocese,order,verbose=verbose)
 
     fixedCal=fixedCalDic.values()
     for fday in fixedCal:
@@ -977,7 +981,7 @@ def generateGeneralFixedCalendar(year):
     return dico
 
 
-def generateProperFixedCalendar(year, dico, continent,country=None,diocese=None,order=None):
+def generateProperFixedCalendar(year, dico, continent,country=None,diocese=None,order=None,verbose=False):
     """Overwrite the general calendar with increasingly local-specific celebrations"""
     if not continent:
         return dico
@@ -998,7 +1002,7 @@ def generateProperFixedCalendar(year, dico, continent,country=None,diocese=None,
             path='Continental/'+continent+"/"+country+"/proper.csv";
             with open(path, 'rb') as csvfile:
                 calreader = csv.reader(csvfile,delimiter=';')            
-                dico = readFixedProperFile(year,dico,calreader)
+                dico = readFixedProperFile(year,dico,calreader,verbose)
         except Exception as e:
             print e
             print traceback.format_exc()
@@ -1009,17 +1013,17 @@ def generateProperFixedCalendar(year, dico, continent,country=None,diocese=None,
             try:
                 with open(path, 'rb') as csvfile:
                     calreader = csv.reader(csvfile,delimiter=';')            
-                    dico = readFixedProperFile(year,dico,calreader)
+                    dico = readFixedProperFile(year,dico,calreader,verbose)
             except Exception as e:
                 print e
                 print traceback.format_exc()
                 
-        elif order:
+        if order:
             path='Continental/'+continent+"/"+country+"/Orders/"+order+".csv";
             try:
                 with open(path, 'rb') as csvfile:
                     calreader = csv.reader(csvfile,delimiter=';')            
-                    dico = readFixedProperFile(year,dico,calreader)
+                    dico = readFixedProperFile(year,dico,calreader,verbose)
             except Exception as e:
                 print e
                 print traceback.format_exc()
@@ -1028,7 +1032,7 @@ def generateProperFixedCalendar(year, dico, continent,country=None,diocese=None,
 
 
 
-def readFixedProperFile(year, dico, calreader):
+def readFixedProperFile(year, dico, calreader, verbose=False):
     for row in calreader:
         month=int(float(row[0]))
         dayN=int(float(row[1]))
@@ -1085,8 +1089,8 @@ def readFixedProperFile(year, dico, calreader):
                     #Add str
                     day.saintrank.append(dico[key].saintrank)
                         
-
-            print "## LOCAL:",dico[key].date.date(),dico[key].rank, dico[key].celebration(), "will be overwritten by", day.celebration(), day.rank
+            if(verbose):
+                print "## LOCAL:",dico[key].date.date(),dico[key].rank, dico[key].celebration(), "will be overwritten by", day.celebration(), day.rank
             
         dico[key]=day
 
@@ -1094,7 +1098,7 @@ def readFixedProperFile(year, dico, calreader):
 
 def printCSVCalendar(year,continent,country,diocese,order):
     '''Outputs the roman calendar of given year in CSV format'''
-    cl=computeCalendar(year,continent,country,diocese=diocese,order=order)
+    cl=computeCalendar(year,continent,country,diocese=diocese,order=order,verbose=True)
     f1=open('./generated_'+str(year)+'.csv','w+')
     for day in cl:
         print >>f1, day.printAll_TR('fr-FR')
